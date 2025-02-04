@@ -56,7 +56,10 @@ export class Event extends BaseModel {
   @OneToMany(() => Ticket, (ticket) => ticket.event)
   tickets: Ticket[];
 
-  @ManyToOne(() => User, (user) => user.events, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "organizer_id" })
-  organizer: User;
+  @ManyToOne(() => User, (user) => user.id, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "user_id" })
+  user!: User;
+  
+  @Column({ type: "json", nullable: true })
+  waitlist: any;
 }

@@ -13,6 +13,7 @@ export interface IEvent {
     GetAllEvents: () => Promise<any>;
     UpdateEvent: (userId: string, load: IUpdateEvent) => Promise<any>;
     DeleteEvent: (userId: string, id: string) => Promise<any>;
+    GetEventWaitlist: (eventId: string) => Promise<any>;
 }
 
 export class EventService implements IEvent {
@@ -23,7 +24,7 @@ export class EventService implements IEvent {
     }
 
     private async checkEventOwnership(event: Event, userId: string) {
-        if (event.organizer.id !== userId) {
+        if (event.user.id !== userId) {
             throw new Error("You are not authorized to modify this event");
         }
     }
@@ -109,6 +110,20 @@ export class EventService implements IEvent {
 
             await this.eventRepository.delete(id);
             return { status: StatusCodes.OK, message: "Event deleted successfully" };
+        } catch (err: any) {
+            return handleError(err);
+        }
+    }
+
+    async GetEventWaitlist(eventId: string) {
+        try {
+            const event = await this.findEventById(eventId);
+            if (!event) {
+                return { status: StatusCodes.NOT_FOUND, message: "Event not found" };
+            }
+
+            const waitlist = event.waitlist;
+            return { status: StatusCodes.OK, message: "Waitlist found", waitlist };
         } catch (err: any) {
             return handleError(err);
         }

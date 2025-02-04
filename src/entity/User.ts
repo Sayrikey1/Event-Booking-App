@@ -51,7 +51,6 @@ export class User extends BaseModel {
 
   @OneToMany(() => WaitingList, (waitingList) => waitingList.user)
   waitingListEntries: WaitingList[];
-  events: any;
 }
 
 
