@@ -3,13 +3,26 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+interface Attachment {
+  filename: string;
+  // You can use either a path or content:
+  path?: string;      // Path to the file on disk
+  content?: string | Buffer; // Direct content of the file
+}
+
 interface MailerOptions {
   mail: string;
   subject: string;
   text: string;
+  attachments?: Attachment[];
 }
 
-export const mailer = async ({ mail, subject, text }: MailerOptions): Promise<void> => {
+export const mailer = async ({
+  mail,
+  subject,
+  text,
+  attachments,
+}: MailerOptions): Promise<void> => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -18,11 +31,12 @@ export const mailer = async ({ mail, subject, text }: MailerOptions): Promise<vo
     },
   });
 
-  const mailOptions = {
+  const mailOptions: nodemailer.SendMailOptions = {
     from: `GreenBarter <${process.env.USERMAIL}>`,
     to: mail,
     subject: subject,
     text: text,
+    attachments: attachments, // Include attachments if provided
   };
 
   try {

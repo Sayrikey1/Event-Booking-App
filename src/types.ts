@@ -64,3 +64,20 @@ export interface IUpdateBooking {
     event_id: string;
     ticket_count: number;
     }
+
+//-------------------------------------------
+export interface IPayment {
+    /**
+   * Process a payment.
+   * @param amount Payment amount in the smallest currency unit (e.g., cents)
+   * @param currency Currency code (e.g., 'usd', 'ngn')
+   * @param source Payment source or token (e.g., token from client)
+   */
+  amount:number;
+  currency:string;
+  source: string;
+}
+
+export interface IPaymentService {
+  ProcessPayment: (load: IPayment) => Promise<any>;
+}

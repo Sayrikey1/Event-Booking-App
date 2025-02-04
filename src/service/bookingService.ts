@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import QRCode from "qrcode";
 import { StatusCodes } from "http-status-codes";
 import AppDataSource from "src/data-source";
 import { Ticket } from "src/entity/Ticket";
@@ -55,14 +56,54 @@ export class BookingService implements IBooking {
         event.availableTickets -= ticketCount;
         await this.eventRepo.save(event);
     }
-
-    private async sendConfirmationEmail(user: User, ticketCount: number, ticketIds: string[]) {
+    
+    private async sendConfirmationEmail(
+      user: User,
+      event: Event,
+      ticketCount: number,
+      ticketIds: string[]
+    ): Promise<void> {
+      try {
+        // Generate QR code data URLs for each ticket
+        const qrCodes: string[] = [];
+        for (let i = 0; i < ticketIds.length; i++) {
+          // Construct ticket data as JSON string
+          const ticketData = JSON.stringify({
+            ticketId: ticketIds[i],
+            userId: user.id,
+            eventName: event.name,
+            eventDate: event.date,
+          });
+          
+          // Generate a QR code data URL for the ticket data
+          const qrCodeDataUrl = await QRCode.toDataURL(ticketData);
+          qrCodes.push(qrCodeDataUrl);
+        }
+    
+        // Compose email text including ticket IDs and their corresponding QR code data URLs
+        const emailText = `Your booking has been confirmed.\n\n` +
+          `You have successfully booked ${ticketCount} ticket(s) for ${event.title} on ${event.date}.\n` +
+          `Your ticket IDs are: ${ticketIds.join(", ")}.\n\n` +
+          `QR Codes for your tickets:\n` +
+          qrCodes.map((code, index) => `Ticket ${ticketIds[index]}: ${code}`).join("\n");
+    
+        // Send the confirmation email
         mailer({
-            mail: user.email,
-            subject: "Booking Confirmation",
-            text: `Your booking has been confirmed. You have successfully booked ${ticketCount} tickets for the event. Your ticket IDs are: ${ticketIds.join(', ')}`,
+          mail: user.email,
+          subject: "Booking Confirmation",
+          text: emailText,
+          attachments: qrCodes.map((qrCode, index) => ({
+            filename: `ticket-${ticketIds[index]}.png`,
+            content: qrCode.split(",")[1],
+            encoding: "base64"
+          }))
         });
+      } catch (error: any) {
+        console.error("Error sending confirmation email:", error.message);
+        // Optionally, handle the error further or log it as needed.
+      }
     }
+    
 
     private async handleWaitingList(event: Event, user: User, ticketCount: number) {
         const waitingList = this.waitingListRepo.create({ event, user, ticket_count: ticketCount });
@@ -74,29 +115,84 @@ export class BookingService implements IBooking {
     }
 
     async CreateBooking(userId: string, load: ICreateBooking) {
+        // Create a query runner to manage our transaction.
+        const queryRunner = AppDataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+    
         try {
+            // Retrieve the user.
             const user = await this.getUserById(userId);
-            const event = await this.getEventById(load.event_id);
-
+            if (!user) {
+                await queryRunner.rollbackTransaction();
+                return {
+                    status: StatusCodes.NOT_FOUND,
+                    message: "User not found",
+                };
+            }
+    
+            // Retrieve and lock the event row for update (pessimistic locking).
+            const event = await queryRunner.manager
+                .createQueryBuilder(Event, "event")
+                .setLock("pessimistic_write")
+                .where("event.id = :id", { id: load.event_id })
+                .getOne();
+    
+            if (!event) {
+                await queryRunner.rollbackTransaction();
+                return {
+                    status: StatusCodes.NOT_FOUND,
+                    message: "Event not found",
+                };
+            }
+    
+            // If not enough tickets are available, add the user to the waiting list.
             if (event.availableTickets < load.ticket_count) {
+                await queryRunner.rollbackTransaction();
+                // handleWaitingList already returns a response with a status code.
                 return await this.handleWaitingList(event, user, load.ticket_count);
             }
+    
+            // Create tickets for the user.
+            const ticketsToCreate = [];
+            for (let i = 0; i < load.ticket_count; i++) {
+                const ticket = this.ticketRepo.create({ event, user });
+                ticketsToCreate.push(ticket);
+            }
+            // Save the tickets using the current transaction.
+            await queryRunner.manager.save(ticketsToCreate);
+    
+            // Update the event's available tickets.
+            event.availableTickets -= load.ticket_count;
+            await queryRunner.manager.save(event);
+    
+            // Commit the transaction.
+            await queryRunner.commitTransaction();
 
-            const ticketsToCreate = await this.createTicketsForUser(event, user, load.ticket_count);
-            await this.updateEventTickets(event, load.ticket_count);
-
+            // Make payment
+            
+    
+            // Send a confirmation email (outside of the transaction).
             const ticketIds = ticketsToCreate.map(ticket => ticket.id);
-            await this.sendConfirmationEmail(user, load.ticket_count, ticketIds);
-
+            await this.sendConfirmationEmail(user, event, load.ticket_count, ticketIds);
+    
             return {
                 status: StatusCodes.CREATED,
                 message: "Booking created successfully",
                 id: ticketIds,
             };
         } catch (err: any) {
-            return handleError(err);  // Use handleError for consistent error handling
+            // Roll back the transaction on error and return a standardized error object.
+            await queryRunner.rollbackTransaction();
+            return {
+                status: StatusCodes.INTERNAL_SERVER_ERROR,
+                message: err.message || "Internal server error",
+            };
+        } finally {
+            // Always release the query runner.
+            await queryRunner.release();
         }
-    }
+    }    
 
     async GetBooking(userId: string, id: string) {
         try {

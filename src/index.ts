@@ -25,6 +25,10 @@ import encryptionRouter from "./routes/encryptionRouter";
 
 // Routes
 import userRouter from "./routes/userRouter";
+import eventRouter from "./routes/eventRouter";
+import bookingRouter from "./routes/bookingRouter";
+import rateLimit from "express-rate-limit";
+import paymentRouter from "./routes/paymentRouter";
 
 
 
@@ -78,11 +82,17 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   encryptionMiddleware(req, res, next); // Apply encryptionMiddleware to other routes
 });
 
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 5, 
+  message: "Too many booking attempts, try again later."
+});
+
 // Remaining routes
 app.use("/", userRouter);
-// app.use("/", walletRouter);
-// app.use("/", waitListRouter);
-
+app.use("/", eventRouter);
+app.use("/", bookingRouter, limiter);
+app.use("/", paymentRouter);
 
 
 // -------------- SETUP DATABASE CONNECTION AND MAKE SERVER LISTEN

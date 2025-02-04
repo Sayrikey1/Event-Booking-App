@@ -16,8 +16,9 @@ import { mailer } from "../config/Mailer";
 import { Otp, OtpType } from "../entity/Otp";
 import generateOtp from "../utils/otpGenerator";
 import { MoreThan } from "typeorm";
-import { StatusCodes } from "http-status-codes"; // Importing the status code package
+import { StatusCodes } from "http-status-codes"; // Using the status-code package
 import { handleError, updateEntity } from "../utils/serviceUtils";
+import logger from "../config/logger";  // Import the logger
 
 dotenv.config();
 
@@ -37,7 +38,6 @@ export class UserService implements IUser {
   // ----------------------
   // Helper Methods
   // ----------------------
-
   private getUserRepo() {
     return AppDataSource.getRepository(User);
   }
@@ -45,7 +45,6 @@ export class UserService implements IUser {
   private getOtpRepo() {
     return AppDataSource.getRepository(Otp);
   }
-
 
   // ----------------------
   // Service Methods
@@ -56,8 +55,9 @@ export class UserService implements IUser {
       const userRepository = this.getUserRepo();
       const user = await userRepository.findOneBy({ email: load.email });
       if (!user) {
+        logger.warn(`Login failed: User with email ${load.email} not found`);
         return {
-          status: StatusCodes.NOT_FOUND, // Using status-code package
+          status: StatusCodes.NOT_FOUND,
           message: "User not found",
           id: "",
           token: "",
@@ -66,8 +66,9 @@ export class UserService implements IUser {
 
       const isPasswordValid = await bcrypt.compare(load.password, user.password);
       if (!isPasswordValid) {
+        logger.warn(`Login failed: Invalid password for email ${load.email}`);
         return {
-          status: StatusCodes.UNAUTHORIZED, // Using status-code package
+          status: StatusCodes.UNAUTHORIZED,
           message: "Invalid password",
           id: "",
           token: "",
@@ -77,17 +78,17 @@ export class UserService implements IUser {
       const token = jwt.sign(
         { id: user.id, email: user.email, user_type: user.user_type },
         process.env.SECRET_KEY!,
-        {
-          expiresIn: "1h",
-        }
+        { expiresIn: "1h" }
       );
+      logger.info(`User ${user.email} logged in successfully`);
       return {
-        status: StatusCodes.OK, // Using status-code package
+        status: StatusCodes.OK,
         message: `Welcome ${user.username}`,
         id: user.id,
         token,
       };
     } catch (err: any) {
+      logger.error(`Login error for email ${load.email}: ${err.message}`);
       return handleError(err);
     }
   }
@@ -103,6 +104,7 @@ export class UserService implements IUser {
       });
 
       createdUser = await userRepository.save(user);
+      logger.info(`User created: ${createdUser.email}`);
 
       // Generate and save OTP
       const otpCode = generateOtp();
@@ -114,6 +116,7 @@ export class UserService implements IUser {
         otp_type: OtpType.UserVerification,
       });
       await otpRepository.save(otp);
+      logger.info(`OTP generated and saved for user: ${createdUser.email}`);
 
       // Send OTP to user email
       await mailer({
@@ -121,9 +124,11 @@ export class UserService implements IUser {
         subject: "Your OTP Code",
         text: `Your OTP code is ${otpCode}. It will expire in 15 minutes.`,
       });
+      logger.info(`OTP email sent to ${createdUser.email}`);
 
       return { status: StatusCodes.CREATED, message: "User created successfully" };
     } catch (err: any) {
+      logger.error(`Error creating user: ${err.message}`);
       if (createdUser) {
         await this.DeleteUser(createdUser.id);
       }
@@ -138,11 +143,13 @@ export class UserService implements IUser {
 
       const user = await userRepository.findOneBy({ email: load.email });
       if (!user) {
-        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
+        logger.warn(`Verify OTP failed: User with email ${load.email} not found`);
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" };
       }
 
       if (user.is_verified) {
-        return { status: StatusCodes.BAD_REQUEST, message: "User is already verified" }; // Using status-code package
+        logger.warn(`Verify OTP: User ${load.email} is already verified`);
+        return { status: StatusCodes.BAD_REQUEST, message: "User is already verified" };
       }
 
       const otpRecord = await otpRepository.findOne({
@@ -154,18 +161,20 @@ export class UserService implements IUser {
       });
 
       if (!otpRecord) {
-        return { status: StatusCodes.BAD_REQUEST, message: "Invalid OTP" }; // Using status-code package
+        logger.warn(`Invalid OTP provided for user ${load.email}`);
+        return { status: StatusCodes.BAD_REQUEST, message: "Invalid OTP" };
       }
 
       if (otpRecord.expires_at < new Date()) {
-        return { status: StatusCodes.BAD_REQUEST, message: "OTP has expired" }; // Using status-code package
+        logger.warn(`OTP expired for user ${load.email}`);
+        return { status: StatusCodes.BAD_REQUEST, message: "OTP has expired" };
       }
 
       otpRecord.is_used = true;
       await otpRepository.save(otpRecord);
-
       user.is_verified = true;
       await userRepository.save(user);
+      logger.info(`User ${load.email} verified successfully`);
 
       // Send verification email
       await mailer({
@@ -173,9 +182,11 @@ export class UserService implements IUser {
         subject: "Account Verified",
         text: "Your account has been successfully verified.",
       });
+      logger.info(`Verification email sent to ${user.email}`);
 
-      return { status: StatusCodes.OK, message: "OTP verified successfully" }; // Using status-code package
+      return { status: StatusCodes.OK, message: "OTP verified successfully" };
     } catch (err: any) {
+      logger.error(`Error verifying OTP for ${load.email}: ${err.message}`);
       return handleError(err);
     }
   }
@@ -185,10 +196,13 @@ export class UserService implements IUser {
       const userRepository = this.getUserRepo();
       const user = await userRepository.findOne({ where: { id } });
       if (!user) {
-        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
+        logger.warn(`GetUser: User with id ${id} not found`);
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" };
       }
-      return { status: StatusCodes.OK, message: user }; // Using status-code package
+      logger.info(`User with id ${id} retrieved successfully`);
+      return { status: StatusCodes.OK, message: user };
     } catch (err: any) {
+      logger.error(`Error retrieving user with id ${id}: ${err.message}`);
       return handleError(err);
     }
   }
@@ -197,8 +211,10 @@ export class UserService implements IUser {
     try {
       const userRepository = this.getUserRepo();
       const users = await userRepository.find();
-      return { status: StatusCodes.OK, message: users }; // Using status-code package
+      logger.info("All users retrieved successfully");
+      return { status: StatusCodes.OK, message: users };
     } catch (err: any) {
+      logger.error(`Error retrieving all users: ${err.message}`);
       return handleError(err);
     }
   }
@@ -208,15 +224,17 @@ export class UserService implements IUser {
       const userRepository = this.getUserRepo();
       const foundUser = await userRepository.findOne({ where: { id: user.id } });
       if (!foundUser) {
-        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
+        logger.warn(`UpdateUser: User with id ${user.id} not found`);
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" };
       }
 
       // Update only the provided fields
       updateEntity(foundUser, user);
-
       await userRepository.save(foundUser);
-      return { status: StatusCodes.OK, message: "User updated successfully" }; // Using status-code package
+      logger.info(`User with id ${user.id} updated successfully`);
+      return { status: StatusCodes.OK, message: "User updated successfully" };
     } catch (err: any) {
+      logger.error(`Error updating user with id ${user.id}: ${err.message}`);
       return handleError(err);
     }
   }
@@ -226,11 +244,14 @@ export class UserService implements IUser {
       const userRepository = this.getUserRepo();
       const user = await userRepository.findOne({ where: { id } });
       if (!user) {
-        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
+        logger.warn(`DeleteUser: User with id ${id} not found`);
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" };
       }
       await userRepository.delete(id);
-      return { status: StatusCodes.OK, message: "User deleted successfully" }; // Using status-code package
+      logger.info(`User with id ${id} deleted successfully`);
+      return { status: StatusCodes.OK, message: "User deleted successfully" };
     } catch (err: any) {
+      logger.error(`Error deleting user with id ${id}: ${err.message}`);
       return handleError(err);
     }
   }
@@ -240,7 +261,8 @@ export class UserService implements IUser {
       const userRepository = this.getUserRepo();
       const user = await userRepository.findOneBy({ email });
       if (!user) {
-        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
+        logger.warn(`SendPasswordResetMail: User with email ${email} not found`);
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" };
       }
 
       const resetToken = uuidv4();
@@ -257,9 +279,11 @@ export class UserService implements IUser {
         subject: "Password Reset",
         text: `You requested a password reset. Click the link to reset your password: ${resetLink}`,
       });
+      logger.info(`Password reset email sent to ${user.email}`);
 
-      return { status: StatusCodes.OK, message: "Password reset email sent successfully" }; // Using status-code package
+      return { status: StatusCodes.OK, message: "Password reset email sent successfully" };
     } catch (err: any) {
+      logger.error(`Error sending password reset email to ${email}: ${err.message}`);
       return handleError(err);
     }
   }
@@ -272,14 +296,16 @@ export class UserService implements IUser {
       });
 
       if (!user) {
-        return { status: StatusCodes.BAD_REQUEST, message: "Invalid or expired token" }; // Using status-code package
+        logger.warn(`ResetPassword: Invalid or expired token ${load.token}`);
+        return { status: StatusCodes.BAD_REQUEST, message: "Invalid or expired token" };
       }
 
       const isSamePassword = await bcrypt.compare(load.password, user.password);
       if (isSamePassword) {
+        logger.warn(`ResetPassword: New password cannot be the same as the existing password for user ${user.email}`);
         return {
           status: StatusCodes.BAD_REQUEST,
-          message: "New password cannot be the same as the existing password", // Using status-code package
+          message: "New password cannot be the same as the existing password",
         };
       }
 
@@ -295,9 +321,11 @@ export class UserService implements IUser {
         subject: "Password Updated Successfully",
         text: "Your password has been updated successfully.",
       });
+      logger.info(`Password reset successfully for user ${user.email}`);
 
-      return { status: StatusCodes.OK, message: "Password reset successfully" }; // Using status-code package
+      return { status: StatusCodes.OK, message: "Password reset successfully" };
     } catch (err: any) {
+      logger.error(`Error resetting password: ${err.message}`);
       return handleError(err);
     }
   }
