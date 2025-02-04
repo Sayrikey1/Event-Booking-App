@@ -1,4 +1,4 @@
-import { Entity, ManyToOne } from "typeorm";
+import { Column, Entity, ManyToOne } from "typeorm";
 import { Event } from "./Event";
 import { User } from "./User";
 import { BaseModel } from "./BaseModel";

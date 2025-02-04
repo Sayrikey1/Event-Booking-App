@@ -1,18 +1,25 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { AppDataSource } from "../data-source";
-import { ICreateUser, ILogin, IUpateUser, IVerifyOtp, VerifyOtpResponse, IResetPassword } from "../types";
+import {
+  ICreateUser,
+  ILogin,
+  IUpateUser,
+  IVerifyOtp,
+  VerifyOtpResponse,
+  IResetPassword,
+} from "../types";
 import { User } from "../entity/User";
-import { mailer } from '../config/Mailer';
+import { mailer } from "../config/Mailer";
 import { Otp, OtpType } from "../entity/Otp";
 import generateOtp from "../utils/otpGenerator";
 import { MoreThan } from "typeorm";
-
+import { StatusCodes } from "http-status-codes"; // Importing the status code package
+import { handleError, updateEntity } from "../utils/serviceUtils";
 
 dotenv.config();
-
 
 export interface IUser {
   Login: (load: ILogin) => Promise<any>;
@@ -27,25 +34,40 @@ export interface IUser {
 }
 
 export class UserService implements IUser {
+  // ----------------------
+  // Helper Methods
+  // ----------------------
+
+  private getUserRepo() {
+    return AppDataSource.getRepository(User);
+  }
+
+  private getOtpRepo() {
+    return AppDataSource.getRepository(Otp);
+  }
+
+
+  // ----------------------
+  // Service Methods
+  // ----------------------
+
   async Login(load: ILogin) {
     try {
-      const userRepository = AppDataSource.getRepository(User);
+      const userRepository = this.getUserRepo();
       const user = await userRepository.findOneBy({ email: load.email });
       if (!user) {
         return {
-          status: 404,
+          status: StatusCodes.NOT_FOUND, // Using status-code package
           message: "User not found",
           id: "",
           token: "",
         };
       }
-      const isPasswordValid = await bcrypt.compare(
-        load.password,
-        user.password
-      );
+
+      const isPasswordValid = await bcrypt.compare(load.password, user.password);
       if (!isPasswordValid) {
         return {
-          status: 401,
+          status: StatusCodes.UNAUTHORIZED, // Using status-code package
           message: "Invalid password",
           id: "",
           token: "",
@@ -60,91 +82,83 @@ export class UserService implements IUser {
         }
       );
       return {
-        status: 200,
+        status: StatusCodes.OK, // Using status-code package
         message: `Welcome ${user.username}`,
         id: user.id,
         token,
       };
     } catch (err: any) {
-      return {
-        status: 500,
-        message: err.message,
-      };
+      return handleError(err);
     }
   }
 
   async CreateUser(load: ICreateUser) {
-    console.log(`CreatingUserLoad-backend`, load);
     let createdUser: User | null = null;
     try {
-      try {
-        const userRepository = AppDataSource.getRepository(User);
-        const hashedPassword = await bcrypt.hash(load.password, 10);
-        const user = userRepository.create({
-          ...load,
-          password: hashedPassword,
-        });
+      const userRepository = this.getUserRepo();
+      const hashedPassword = await bcrypt.hash(load.password, 10);
+      const user = userRepository.create({
+        ...load,
+        password: hashedPassword,
+      });
 
-        createdUser = await userRepository.save(user);
+      createdUser = await userRepository.save(user);
 
-        // Generate and save OTP
-        const otpCode = generateOtp();
-        const otpRepository = AppDataSource.getRepository(Otp);
-        const otp = otpRepository.create({
-          user: createdUser,
-          otp_code: otpCode,
-          expires_at: new Date(Date.now() + 15 * 60 * 1000), // OTP expires in 15 minutes
-          otp_type: OtpType.UserVerification,
-        });
-        await otpRepository.save(otp);
+      // Generate and save OTP
+      const otpCode = generateOtp();
+      const otpRepository = this.getOtpRepo();
+      const otp = otpRepository.create({
+        user: createdUser,
+        otp_code: otpCode,
+        expires_at: new Date(Date.now() + 15 * 60 * 1000), // OTP expires in 15 minutes
+        otp_type: OtpType.UserVerification,
+      });
+      await otpRepository.save(otp);
 
-        // Send OTP to user email
-        mailer({
-          mail: createdUser.email,
-          subject: 'Your OTP Code',
-          text: `Your OTP code is ${otpCode}. It will expire in 15 minutes.`,
-        });
+      // Send OTP to user email
+      await mailer({
+        mail: createdUser.email,
+        subject: "Your OTP Code",
+        text: `Your OTP code is ${otpCode}. It will expire in 15 minutes.`,
+      });
 
-        return { status: 201, message: "User created successfully" };
-      } catch (e: any) {
-        if (createdUser) {
-          await this.DeleteUser(createdUser.id);
-        }
-        console.log(e.message)
-        return { status: 400, message: e.message };
-      }
+      return { status: StatusCodes.CREATED, message: "User created successfully" };
     } catch (err: any) {
-      return {
-        status: 500,
-        message: err.message,
-      };
+      if (createdUser) {
+        await this.DeleteUser(createdUser.id);
+      }
+      return handleError(err);
     }
   }
 
   async VerifyOtp(load: IVerifyOtp): Promise<VerifyOtpResponse> {
     try {
-      const userRepository = AppDataSource.getRepository(User);
-      const otpRepository = AppDataSource.getRepository(Otp);
+      const userRepository = this.getUserRepo();
+      const otpRepository = this.getOtpRepo();
 
       const user = await userRepository.findOneBy({ email: load.email });
       if (!user) {
-        return { status: 404, message: 'User not found' };
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
       }
 
       if (user.is_verified) {
-        return { status: 400, message: 'User is already verified' };
+        return { status: StatusCodes.BAD_REQUEST, message: "User is already verified" }; // Using status-code package
       }
-      console.log(load.email, load.otp)
+
       const otpRecord = await otpRepository.findOne({
-        where: { user: { email: load.email }, otp_code: load.otp, otp_type: OtpType.UserVerification },
+        where: {
+          user: { email: load.email },
+          otp_code: load.otp,
+          otp_type: OtpType.UserVerification,
+        },
       });
 
       if (!otpRecord) {
-        return { status: 400, message: 'Invalid OTP' };
+        return { status: StatusCodes.BAD_REQUEST, message: "Invalid OTP" }; // Using status-code package
       }
 
       if (otpRecord.expires_at < new Date()) {
-        return { status: 400, message: 'OTP has expired' };
+        return { status: StatusCodes.BAD_REQUEST, message: "OTP has expired" }; // Using status-code package
       }
 
       otpRecord.is_used = true;
@@ -156,100 +170,77 @@ export class UserService implements IUser {
       // Send verification email
       await mailer({
         mail: user.email,
-        subject: 'Account Verified',
-        text: 'Your account has been successfully verified.',
+        subject: "Account Verified",
+        text: "Your account has been successfully verified.",
       });
 
-      return { status: 200, message: 'OTP verified successfully' };
+      return { status: StatusCodes.OK, message: "OTP verified successfully" }; // Using status-code package
     } catch (err: any) {
-      return { status: 500, message: err.message };
+      return handleError(err);
     }
   }
 
   async GetUser(id: string) {
     try {
-      const userRepository = AppDataSource.getRepository(User);
-      const user = await userRepository.findOne({
-        where: { id: (id) },
-      });
+      const userRepository = this.getUserRepo();
+      const user = await userRepository.findOne({ where: { id } });
       if (!user) {
-        return { status: 404, message: "User not found" };
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
       }
-      return { status: 200, message: user };
+      return { status: StatusCodes.OK, message: user }; // Using status-code package
     } catch (err: any) {
-      return {
-        status: 500,
-        message: err.message,
-      };
+      return handleError(err);
     }
   }
 
   async GetAllUsers() {
     try {
-      const userRepository = AppDataSource.getRepository(User);
+      const userRepository = this.getUserRepo();
       const users = await userRepository.find();
-      return { status: 200, message: users };
+      return { status: StatusCodes.OK, message: users }; // Using status-code package
     } catch (err: any) {
-      return {
-        status: 500,
-        message: err.message,
-      };
+      return handleError(err);
     }
   }
 
   async UpdateUser(user: IUpateUser) {
     try {
-      const userRepository = AppDataSource.getRepository(User);
-      const foundUser = await userRepository.findOne({
-        where: { id: user.id },
-      });
+      const userRepository = this.getUserRepo();
+      const foundUser = await userRepository.findOne({ where: { id: user.id } });
       if (!foundUser) {
-        return { status: 404, message: "User not found" };
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
       }
-  
-      // Update fields dynamically
-      Object.keys(user).forEach((key) => {
-        const typedKey = key as keyof IUpateUser;
-        if (typedKey !== 'id' && user[typedKey] !== undefined && user[typedKey] !== null && user[typedKey] !== '') {
-          (foundUser as any)[typedKey] = user[typedKey];
-        }
-      });
-  
+
+      // Update only the provided fields
+      updateEntity(foundUser, user);
+
       await userRepository.save(foundUser);
-      return { status: 200, message: "User updated successfully" };
+      return { status: StatusCodes.OK, message: "User updated successfully" }; // Using status-code package
     } catch (err: any) {
-      return {
-        status: 500,
-        message: err.message,
-      };
+      return handleError(err);
     }
   }
 
   async DeleteUser(id: string) {
     try {
-      const userRepository = AppDataSource.getRepository(User);
-      const user = await userRepository.findOne({
-        where: { id: (id) },
-      });
+      const userRepository = this.getUserRepo();
+      const user = await userRepository.findOne({ where: { id } });
       if (!user) {
-        return { status: 404, message: "User not found" };
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
       }
       await userRepository.delete(id);
-      return { status: 200, message: "User deleted successfully" };
+      return { status: StatusCodes.OK, message: "User deleted successfully" }; // Using status-code package
     } catch (err: any) {
-      return {
-        staus: 500,
-        message: err.message,
-      };
+      return handleError(err);
     }
   }
 
   async SendPasswordResetMail(email: string) {
     try {
-      const userRepository = AppDataSource.getRepository(User);
+      const userRepository = this.getUserRepo();
       const user = await userRepository.findOneBy({ email });
       if (!user) {
-        return { status: 404, message: "User not found" };
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" }; // Using status-code package
       }
 
       const resetToken = uuidv4();
@@ -263,49 +254,51 @@ export class UserService implements IUser {
 
       await mailer({
         mail: user.email,
-        subject: 'Password Reset',
+        subject: "Password Reset",
         text: `You requested a password reset. Click the link to reset your password: ${resetLink}`,
       });
 
-      return { status: 200, message: "Password reset email sent successfully" };
+      return { status: StatusCodes.OK, message: "Password reset email sent successfully" }; // Using status-code package
     } catch (err: any) {
-      return { status: 500, message: err.message };
+      return handleError(err);
     }
   }
 
   async ResetPassword(load: IResetPassword) {
     try {
-      const userRepository = AppDataSource.getRepository(User);
+      const userRepository = this.getUserRepo();
       const user = await userRepository.findOne({
         where: { resetToken: load.token, resetTokenExpiry: MoreThan(new Date()) },
       });
-  
+
       if (!user) {
-        return { status: 400, message: "Invalid or expired token" };
+        return { status: StatusCodes.BAD_REQUEST, message: "Invalid or expired token" }; // Using status-code package
       }
-  
-      // Check if the new password is the same as the existing password
+
       const isSamePassword = await bcrypt.compare(load.password, user.password);
       if (isSamePassword) {
-        return { status: 400, message: "New password cannot be the same as the existing password" };
+        return {
+          status: StatusCodes.BAD_REQUEST,
+          message: "New password cannot be the same as the existing password", // Using status-code package
+        };
       }
-  
+
       const hashedPassword = await bcrypt.hash(load.password, 10);
       user.password = hashedPassword;
       user.resetToken = null;
       user.resetTokenExpiry = null;
       await userRepository.save(user);
-  
+
       // Send email notification
       await mailer({
         mail: user.email,
-        subject: 'Password Updated Successfully',
-        text: 'Your password has been updated successfully.',
+        subject: "Password Updated Successfully",
+        text: "Your password has been updated successfully.",
       });
-  
-      return { status: 200, message: "Password reset successfully" };
+
+      return { status: StatusCodes.OK, message: "Password reset successfully" }; // Using status-code package
     } catch (err: any) {
-      return { status: 500, message: err.message };
+      return handleError(err);
     }
   }
 }

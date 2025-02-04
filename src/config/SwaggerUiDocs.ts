@@ -40,14 +40,14 @@ const options = {
   definition: {
     openapi: "3.0.3",
     info: {
-      title: "Green Barter API",
-      version: "1.7.1",
-      description: "This is the api for green barter",
-      // contact: {
-      //   name: "Patrick",
-      //   url: "folio.vercel.app",
-      //   email: "pmohammed@chamsswitch.com",
-      // },
+      title: "Event Booking API",
+      version: "1.0.0",
+      description: "This is the api for an event booking application",
+      contact: {
+        name: "Sayrikey 👨‍💻",  // Engineer emoji added here
+        url: "https://github.com/Sayrikey1",  // Direct GitHub link added here
+        email: "📧 kamalseriki49@gmail.com",  // Email emoji added here
+      },
     },
     servers: servers,
     basePath: "/",
@@ -69,6 +69,7 @@ const options = {
   },
   apis: [decodedPath],
 };
+
 
 const swaggerconfig = swaggerJSDoc(options);
 export default swaggerconfig;

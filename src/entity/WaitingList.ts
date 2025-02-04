@@ -1,4 +1,4 @@
-import { Entity, ManyToOne } from "typeorm";
+import { Column, Entity, ManyToOne } from "typeorm";
 import { Event } from "./Event";
 import { User } from "./User";
 import { BaseModel } from "./BaseModel";
@@ -10,4 +10,7 @@ export class WaitingList extends BaseModel {
 
   @ManyToOne(() => Event)
   event: Event;
+
+  @Column({ type: "integer" })
+  ticket_count: number;
 }

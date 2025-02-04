@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { NextFunction, Request, RequestHandler, Response } from "express";
+import { StatusCodes } from "http-status-codes"; // Import StatusCodes from http-status-codes
 
 export interface CustomRequest extends Request {
   user?: any;
@@ -13,13 +14,13 @@ const TokenVerification = async (
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
   }
 
   const token = authHeader.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "Token expired or invalid 002" });
+    return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Token expired or invalid 002" });
   }
 
   try {
@@ -28,14 +29,14 @@ const TokenVerification = async (
     console.log(req.user)
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Token expired or invalid" });
+    return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Token expired or invalid" });
   }
 };
 export default TokenVerification as RequestHandler;
 
 export const GetCurrentUser = async (string: string) => {
   if (!string || !string.startsWith("Bearer ")) {
-    return { message: "Merchant Not Found" };
+    return { message: "User Not Found" };
   }
   const token = string.split(" ")[1];
 
@@ -64,5 +65,3 @@ export const GetCurrentUser = async (string: string) => {
     };
   }
 };
-
-

@@ -52,3 +52,15 @@ export interface IUpdateEvent {
     totalTickets: number;
     ticket_price: number;
     }
+
+//-----------------------------------------------
+
+export interface ICreateBooking {
+    event_id: string;
+    ticket_count: number;
+    }
+
+export interface IUpdateBooking {
+    event_id: string;
+    ticket_count: number;
+    }
