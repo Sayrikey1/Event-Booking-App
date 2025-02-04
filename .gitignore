@@ -1,0 +1,6 @@
+.env
+env.txt
+test.ts
+test.txt
+dist
+node_modules
