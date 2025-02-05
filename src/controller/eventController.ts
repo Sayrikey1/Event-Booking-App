@@ -11,7 +11,7 @@ export class EventController {
     constructor() {}
     
     CreateEvent: RequestHandler = async (req, res) => {
-        const authenticatedUser = getAuthenticatedUser(req); // Get the authenticated user from the request
+        const authenticatedUser = getAuthenticatedUser(req); 
         if (!authenticatedUser) {
             res.status(StatusCodes.UNAUTHORIZED).json({ message: "User not authenticated" });
             return;
@@ -33,7 +33,7 @@ export class EventController {
     };
     
     UpdateEvent: RequestHandler = async (req: CustomRequest, res): Promise<void> => {
-        const authenticatedUser = getAuthenticatedUser(req); // Get the authenticated user from the request
+        const authenticatedUser = getAuthenticatedUser(req); 
         if (!authenticatedUser) {
             res.status(StatusCodes.UNAUTHORIZED).json({ message: "User not authenticated" });
             return;
@@ -45,13 +45,13 @@ export class EventController {
     
     DeleteEvent: RequestHandler = async (req: CustomRequest, res): Promise<void> => {
         const { id } = req.params;
-        const authenticatedUser = getAuthenticatedUser(req); // Get the authenticated user from the request
+        const authenticatedUser = getAuthenticatedUser(req); 
         if (!authenticatedUser) {
             res.status(StatusCodes.UNAUTHORIZED).json({ message: "User not authenticated" });
             return;
         }
 
-        const response = await this.event.DeleteEvent(authenticatedUser.id, id); // Pass the userId along with the event id
+        const response = await this.event.DeleteEvent(authenticatedUser.id, id); 
         res.status(response.status || StatusCodes.OK).json(response);
     };
 }

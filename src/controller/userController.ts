@@ -11,13 +11,11 @@ export class UserController {
 
   Login: RequestHandler = async (req, res) => {
     const body = req.body as ILogin;
-    console.log(body);
     const response = await this.user.Login(body);
     res.status(response.status || StatusCodes.OK).json(response);
   };
 
   CreateUser: RequestHandler = async (req, res) => {
-    console.log(`Controller for creating user`, req.body);
     const body = req.body as ICreateUser;
     const response = await this.user.CreateUser(body);
     res.status(response.status || StatusCodes.CREATED).json(response);

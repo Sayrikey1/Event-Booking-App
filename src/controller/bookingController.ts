@@ -11,7 +11,7 @@ export class BookingController {
     constructor() {}
     
     CreateBooking: RequestHandler = async (req, res) => {
-        const authenticatedUser = getAuthenticatedUser(req); // Get the authenticated user from the request
+        const authenticatedUser = getAuthenticatedUser(req); 
         if (!authenticatedUser) {
             res.status(StatusCodes.UNAUTHORIZED).json({ message: "User not authenticated" });
             return;
@@ -22,7 +22,7 @@ export class BookingController {
     };
     
     GetBooking: RequestHandler = async (req, res) => {
-        const authenticatedUser = getAuthenticatedUser(req); // Get the authenticated user from the request
+        const authenticatedUser = getAuthenticatedUser(req); 
         if (!authenticatedUser) {
             res.status(StatusCodes.UNAUTHORIZED).json({ message: "User not authenticated" });
             return;
@@ -33,7 +33,7 @@ export class BookingController {
     };
     
     GetAllBookings: RequestHandler = async (req, res) => {
-        const authenticatedUser = getAuthenticatedUser(req); // Get the authenticated user from the request
+        const authenticatedUser = getAuthenticatedUser(req); 
         if (!authenticatedUser) {
             res.status(StatusCodes.UNAUTHORIZED).json({ message: "User not authenticated" });
             return;
@@ -50,7 +50,7 @@ export class BookingController {
             return;
         }
 
-        const response = await this.booking.DeleteBooking(authenticatedUser.id, id); // Pass the userId along with the booking id
+        const response = await this.booking.DeleteBooking(authenticatedUser.id, id); 
         res.status(response.status || StatusCodes.OK).json(response);
     };
 
