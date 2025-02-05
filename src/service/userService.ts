@@ -26,6 +26,7 @@ export interface IUser {
   Login: (load: ILogin) => Promise<any>;
   CreateUser: (load: ICreateUser) => Promise<any>;
   VerifyOtp: (load: IVerifyOtp) => Promise<VerifyOtpResponse>;
+  ResendOtp: (email: string ) => Promise<{ status: number; message: string }>;
   GetUser: (id: string) => Promise<any>;
   GetAllUsers: () => Promise<any>;
   UpdateUser: (user: IUpateUser) => Promise<any>;
@@ -102,30 +103,32 @@ export class UserService implements IUser {
         ...load,
         password: hashedPassword,
       });
-
+  
       createdUser = await userRepository.save(user);
       logger.info(`User created: ${createdUser.email}`);
-
+  
       // Generate and save OTP
       const otpCode = generateOtp();
       const otpRepository = this.getOtpRepo();
       const otp = otpRepository.create({
         user: createdUser,
         otp_code: otpCode,
-        expires_at: new Date(Date.now() + 15 * 60 * 1000), // OTP expires in 15 minutes
+        expires_at: new Date(Date.now() + 15 * 60 * 1000),
         otp_type: OtpType.UserVerification,
       });
       await otpRepository.save(otp);
       logger.info(`OTP generated and saved for user: ${createdUser.email}`);
-
-      // Send OTP to user email
+  
+      // Send OTP to user email using HTML template
       await mailer({
         mail: createdUser.email,
-        subject: "Your OTP Code",
-        text: `Your OTP code is ${otpCode}. It will expire in 15 minutes.`,
+        subject: "SIGN UP OTP Code",
+        template: "otpTemplate",
+        templateData: { OTP_CODE: otpCode },
       });
+      
       logger.info(`OTP email sent to ${createdUser.email}`);
-
+  
       return { status: StatusCodes.CREATED, message: "User created successfully" };
     } catch (err: any) {
       logger.error(`Error creating user: ${err.message}`);
@@ -135,7 +138,7 @@ export class UserService implements IUser {
       return handleError(err);
     }
   }
-
+  
   async VerifyOtp(load: IVerifyOtp): Promise<VerifyOtpResponse> {
     try {
       const userRepository = this.getUserRepo();
@@ -180,7 +183,11 @@ export class UserService implements IUser {
       await mailer({
         mail: user.email,
         subject: "Account Verified",
-        text: "Your account has been successfully verified.",
+        template: "accountVerifiedTemplate", // assuming your mailer is configured to look for this template file
+        templateData: {
+          username: user.username, // assuming user has a username property
+          email: user.email,
+        },
       });
       logger.info(`Verification email sent to ${user.email}`);
 
@@ -191,6 +198,67 @@ export class UserService implements IUser {
     }
   }
 
+  async ResendOtp(email: string): Promise<{ status: number; message: string }> {
+    try {
+      const userRepository = this.getUserRepo();
+      const otpRepository = this.getOtpRepo();
+  
+      // Check if the user exists
+      const user = await userRepository.findOneBy({ email });
+      if (!user) {
+        logger.warn(`Resend OTP failed: User with email ${email} not found`);
+        return { status: StatusCodes.NOT_FOUND, message: "User not found" };
+      }
+  
+      // If the user is already verified, no need to resend OTP
+      if (user.is_verified) {
+        logger.warn(`Resend OTP: User ${email} is already verified`);
+        return { status: StatusCodes.BAD_REQUEST, message: "User is already verified" };
+      }
+  
+      // Look for an existing, unused OTP of type UserVerification
+      const existingOtp = await otpRepository.findOne({
+        where: {
+          user: { email },
+          otp_type: OtpType.UserVerification,
+          is_used: false,
+        },
+      });
+  
+      // Delete the unused OTP if it exists
+      if (existingOtp) {
+        await otpRepository.delete(existingOtp.id);
+        logger.info(`Deleted existing unused OTP for user ${email}`);
+      }
+  
+      // Generate a new OTP
+      const otpCode = generateOtp();
+      const newOtp = otpRepository.create({
+        user: user,
+        otp_code: otpCode,
+        expires_at: new Date(Date.now() + 15 * 60 * 1000), // OTP valid for 15 minutes
+        otp_type: OtpType.UserVerification,
+        is_used: false,
+      });
+      await otpRepository.save(newOtp);
+      logger.info(`Generated new OTP for user ${email}`);
+  
+      // Send the new OTP via email using the OTP template
+      await mailer({
+        mail: user.email,
+        subject: "Resend OTP Code",
+        template: "otpTemplate",
+        templateData: { OTP_CODE: otpCode },
+      });
+      logger.info(`OTP email sent to ${user.email}`);
+  
+      return { status: StatusCodes.OK, message: "OTP resent successfully" };
+    } catch (err: any) {
+      logger.error(`Error resending OTP for ${email}: ${err.message}`);
+      return handleError(err);
+    }
+  }
+  
   async GetUser(id: string) {
     try {
       const userRepository = this.getUserRepo();
@@ -199,13 +267,17 @@ export class UserService implements IUser {
         logger.warn(`GetUser: User with id ${id} not found`);
         return { status: StatusCodes.NOT_FOUND, message: "User not found" };
       }
+      
+      // Exclude the password field from the returned user object.
+      const { password, ...userWithoutPassword } = user;
+      
       logger.info(`User with id ${id} retrieved successfully`);
-      return { status: StatusCodes.OK, message: user };
+      return { status: StatusCodes.OK, message: userWithoutPassword };
     } catch (err: any) {
       logger.error(`Error retrieving user with id ${id}: ${err.message}`);
       return handleError(err);
     }
-  }
+  }  
 
   async GetAllUsers() {
     try {
@@ -258,35 +330,40 @@ export class UserService implements IUser {
 
   async SendPasswordResetMail(email: string) {
     try {
-      const userRepository = this.getUserRepo();
-      const user = await userRepository.findOneBy({ email });
-      if (!user) {
-        logger.warn(`SendPasswordResetMail: User with email ${email} not found`);
-        return { status: StatusCodes.NOT_FOUND, message: "User not found" };
-      }
+        const userRepository = this.getUserRepo();
+        const user = await userRepository.findOneBy({ email });
+        if (!user) {
+            logger.warn(`SendPasswordResetMail: User with email ${email} not found`);
+            return { status: StatusCodes.NOT_FOUND, message: "User not found" };
+        }
 
-      const resetToken = uuidv4();
-      const resetTokenExpiry = new Date(Date.now() + 3600000); // Token expires in 1 hour
+        const resetToken = uuidv4();
+        const resetTokenExpiry = new Date(Date.now() + 3600000); // Token expires in 1 hour
 
-      user.resetToken = resetToken;
-      user.resetTokenExpiry = resetTokenExpiry;
-      await userRepository.save(user);
+        user.resetToken = resetToken;
+        user.resetTokenExpiry = resetTokenExpiry;
+        await userRepository.save(user);
 
-      const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-      await mailer({
-        mail: user.email,
-        subject: "Password Reset",
-        text: `You requested a password reset. Click the link to reset your password: ${resetLink}`,
-      });
-      logger.info(`Password reset email sent to ${user.email}`);
+        await mailer({
+            mail: user.email,
+            subject: "Password Reset",
+            template: "passwordReset",
+            templateData: {
+                USER_NAME: user.username || "User",
+                RESET_LINK: resetLink,
+            },
+        });
 
-      return { status: StatusCodes.OK, message: "Password reset email sent successfully" };
+        logger.info(`Password reset email sent to ${user.email}`);
+
+        return { status: StatusCodes.OK, message: "Password reset email sent successfully" };
     } catch (err: any) {
-      logger.error(`Error sending password reset email to ${email}: ${err.message}`);
-      return handleError(err);
+        logger.error(`Error sending password reset email to ${email}: ${err.message}`);
+        return handleError(err);
     }
-  }
+ }
 
   async ResetPassword(load: IResetPassword) {
     try {

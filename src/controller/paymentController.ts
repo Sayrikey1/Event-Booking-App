@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
+import { Request, RequestHandler, Response } from "express";
 import stripe from "stripe";
-import { Payment } from "src/entity/Payment";
-import AppDataSource from "src/data-source";
+import { Payment } from "../entity/Payment";
+import AppDataSource from "../data-source";
 import crypto from "crypto";
 import axios from "axios";
 
@@ -12,7 +12,7 @@ const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY as string, {
 /**
  * Stripe Webhook Controller
  */
-export const stripeWebhook = async (req: Request, res: Response) => {
+export const stripeWebhook: RequestHandler = async (req, res): Promise<any> => {
   const sig = req.headers["stripe-signature"];
 
   try {
@@ -47,7 +47,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
 /**
  * Paystack Webhook Controller
  */
-export const paystackWebhook = async (req: Request, res: Response) => {
+export const paystackWebhook: RequestHandler = async (req, res): Promise<any> => {
   const secret = process.env.PAYSTACK_SECRET_KEY as string;
 
   // Verify Paystack webhook signature

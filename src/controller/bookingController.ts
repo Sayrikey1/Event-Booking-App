@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { IBooking, BookingService } from "./../service/bookingService";
 import { ICreateBooking, IUpdateBooking } from "../types";
 import { CustomRequest } from "../middlewares/TokenVerification";
-import { getAuthenticatedUser } from "src/utils/authUtils";
+import { getAuthenticatedUser } from "../utils/authUtils";
 
 export class BookingController {
     booking: IBooking = new BookingService();

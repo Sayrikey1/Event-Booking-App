@@ -4,3 +4,5 @@ test.ts
 test.txt
 dist
 node_modules
+trash.txt
+logs

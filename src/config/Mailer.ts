@@ -1,19 +1,29 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import Handlebars from "handlebars";
 
 dotenv.config();
 
+// Fix for __dirname in ES Modules
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+
 interface Attachment {
   filename: string;
-  // You can use either a path or content:
-  path?: string;      // Path to the file on disk
-  content?: string | Buffer; // Direct content of the file
+  path?: string;
+  content?: string | Buffer;
+  cid?: string;
 }
 
 interface MailerOptions {
   mail: string;
   subject: string;
-  text: string;
+  text?: string; // Optional plain text fallback
+  template?: string; // Name of the template file (without .html)
+  templateData?: Record<string, any>; // Dynamic values for template placeholders
   attachments?: Attachment[];
 }
 
@@ -21,6 +31,8 @@ export const mailer = async ({
   mail,
   subject,
   text,
+  template,
+  templateData = {},
   attachments,
 }: MailerOptions): Promise<void> => {
   const transporter = nodemailer.createTransport({
@@ -31,12 +43,31 @@ export const mailer = async ({
     },
   });
 
+  let htmlTemplate: string | undefined;
+
+  // Load and compile template if provided
+  if (template) {
+    // const templatePath = path.join(__dirname, "src", "templates", `${template}.html`);
+    const templatePath = path.join(__dirname, "..", "templates", `${template}.html`);
+    console.log(`Decoded path for mailer templates:`, templatePath);
+
+    if (fs.existsSync(templatePath)) {
+      const templateSource = fs.readFileSync(templatePath, "utf8");
+      // Compile using Handlebars to process loops and conditionals
+      const compiledTemplate = Handlebars.compile(templateSource);
+      htmlTemplate = compiledTemplate(templateData);
+    } else {
+      console.warn(`Email template "${template}" not found. Falling back to plain text.`);
+    }
+  }
+
   const mailOptions: nodemailer.SendMailOptions = {
-    from: `GreenBarter <${process.env.USERMAIL}>`,
+    from: `Event-Booking-App <${process.env.USERMAIL}>`,
     to: mail,
     subject: subject,
-    text: text,
-    attachments: attachments, // Include attachments if provided
+    text: text || "No content provided", // Fallback text if no template is found
+    html: htmlTemplate || undefined, // Use HTML only if a valid template exists
+    attachments: attachments,
   };
 
   try {

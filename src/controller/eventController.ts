@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { IEvent, EventService } from "./../service/eventService";
 import { ICreateEvent, IUpdateEvent } from "../types";
 import { CustomRequest } from "../middlewares/TokenVerification";
-import { getAuthenticatedUser } from "src/utils/authUtils";
+import { getAuthenticatedUser } from "../utils/authUtils";
 
 export class EventController {
     event: IEvent = new EventService();
@@ -11,8 +11,13 @@ export class EventController {
     constructor() {}
     
     CreateEvent: RequestHandler = async (req, res) => {
+        const authenticatedUser = getAuthenticatedUser(req); // Get the authenticated user from the request
+        if (!authenticatedUser) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ message: "User not authenticated" });
+            return;
+        }        
         const body = req.body as ICreateEvent;
-        const response = await this.event.CreateEvent(body);
+        const response = await this.event.CreateEvent(authenticatedUser.id, body);
         res.status(response.status || StatusCodes.CREATED).json(response);
     };
     

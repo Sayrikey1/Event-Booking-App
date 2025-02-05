@@ -58,7 +58,7 @@ export class Event extends BaseModel {
 
   @ManyToOne(() => User, (user) => user.id, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  user!: User;
+  user: User;
   
   @Column({ type: "json", nullable: true })
   waitlist: any;

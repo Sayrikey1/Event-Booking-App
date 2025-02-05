@@ -118,6 +118,49 @@ userRouter.post("/api/verify-otp", userController.VerifyOtp);
 
 /**
  * @openapi
+ * '/api/resend-otp':
+ *   post:
+ *     tags:
+ *       - User
+ *     summary: Resend OTP code for user verification.
+ *     description: |
+ *       Deletes any existing unused OTP for the user and generates a new OTP for account verification.
+ *       The new OTP is then sent to the user's email.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: The email address of the user for whom the OTP will be resent.
+ *             required:
+ *               - email
+ *     responses:
+ *       200:
+ *         description: OTP resent successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: OTP resent successfully
+ *       400:
+ *         description: User already verified or a bad request.
+ *       404:
+ *         description: User not found.
+ */
+userRouter.post("/api/resend-otp", userController.ResendOtp);
+
+/**
+ * @openapi
  * '/api/user':
  *  get:
  *     tags:

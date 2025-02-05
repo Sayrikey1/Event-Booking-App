@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ticket Assignment Notification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .header {
+      background: linear-gradient(135deg, #2196F3, #21CBF3);
+      padding: 20px;
+      text-align: center;
+      color: #fff;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+    .header p {
+      margin: 5px 0 0;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .content {
+      padding: 20px;
+      color: #333;
+    }
+    .content p {
+      margin: 0 0 15px;
+      line-height: 1.6;
+    }
+    .qr-codes {
+      padding: 20px;
+      background-color: #f7fafc;
+    }
+    .qr-codes div {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .qr-codes img {
+      display: block;
+      margin: 10px auto;
+      max-width: 150px;
+      max-height: 150px;
+    }
+    .footer {
+      background-color: #eceff1;
+      padding: 15px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+    .footer p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Ticket Assignment Notification</h1>
+      <p>Your waiting list request was successful!</p>
+    </div>
+    <div class="content">
+      <p>Dear {{userName}},</p>
+      <p>
+        We are pleased to inform you that tickets for the event 
+        <strong>{{eventName}}</strong> on <strong>{{eventDate}}</strong> have become available and have been assigned to you.
+      </p>
+      <p>
+        You have been assigned <strong>{{ticketCount}}</strong> ticket(s).
+      </p>
+      <p>Your ticket IDs are: <strong>{{ticketIds}}</strong></p>
+      <p>Please find the QR codes for your tickets below.</p>
+    </div>
+    <div class="qr-codes">
+      {{#each qrCodes}}
+      <div>
+        <p>Ticket {{this.ticketId}}:</p>
+        <img src="cid:{{this.ticketId}}.png" alt="QR Code for Ticket {{this.ticketId}}" />
+      </div>
+      {{/each}}
+    </div>
+    <div class="footer">
+      <p>&copy; 2024 Event-Booking-App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

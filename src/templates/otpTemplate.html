@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTP Code</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: #4CAF50;
+      padding: 10px;
+      text-align: center;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .content {
+      padding: 20px;
+      text-align: center;
+      font-size: 16px;
+    }
+    .otp-code {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4CAF50;
+      margin: 10px 0;
+    }
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">Event-Booking-App OTP Verification</div>
+    <div class="content">
+      <p>Hello,</p>
+      <p>Your OTP code is:</p>
+      <p class="otp-code">{{OTP_CODE}}</p>
+      <p>This code will expire in 15 minutes. Do not share this with anyone.</p>
+    </div>
+    <div class="footer">
+      &copy; 2024 Sayrikey. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

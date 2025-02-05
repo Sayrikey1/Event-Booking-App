@@ -20,19 +20,63 @@ const eventController = new EventController();
  *           schema:
  *             type: object
  *             properties:
- *               title:
+ *               name:
  *                 type: string
+ *                 description: The name of the event.
+ *                 example: "Annual Concert"
  *               description:
  *                 type: string
+ *                 description: A detailed description of the event.
+ *                 example: "A live performance event featuring multiple artists."
  *               date:
  *                 type: string
+ *                 format: date-time
+ *                 description: The date and time of the event.
+ *                 example: "2025-12-31T20:00:00Z"
+ *               location:
+ *                 type: string
+ *                 description: The location where the event will take place.
+ *                 example: "Tafawa Balewa Square, Lagos, Nigeria"
+ *               totalTickets:
+ *                 type: number
+ *                 description: The total number of tickets available for the event.
+ *                 example: 500
+ *               ticket_price:
+ *                 type: number
+ *                 description: The price for each ticket.
+ *                 example: 99.99
+ *               duration:
+ *                 type: number
+ *                 description: The duration of the event in hours.
+ *                 example: 3
+ *             required:
+ *               - name
+ *               - description
+ *               - date
+ *               - location
+ *               - totalTickets
+ *               - ticket_price
+ *               - duration
  *     responses:
  *       201:
  *         description: Event created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 201
+ *                 message:
+ *                   type: string
+ *                   example: "Event created successfully"
  *       400:
  *         description: Bad Request
  */
 eventRouter.post("/api/event/create", TokenVerification, eventController.CreateEvent);
+
+
 
 /**
  * @openapi

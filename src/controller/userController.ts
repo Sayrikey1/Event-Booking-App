@@ -29,6 +29,12 @@ export class UserController {
     res.status(response.status || StatusCodes.OK).json(response);
   };
 
+  ResendOtp: RequestHandler = async (req, res) => {
+    const {email} = req.body;
+    const response = await this.user.ResendOtp(email);
+    res.status(response.status || StatusCodes.OK).json(response)
+  }
+
   GetUser: RequestHandler = async (req: CustomRequest, res) => {
     const userId = req.user?.id; // Access user ID from request object
     const response = await this.user.GetUser(userId);

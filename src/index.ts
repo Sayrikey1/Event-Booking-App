@@ -74,13 +74,13 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerconfig));
 app.use("/", encryptionRouter);
 
 // Apply encryptionMiddleware for all other routes, excluding the encryptionRouter
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const excludedRoutes = ["/api/encrypt", "/api/decrypt"]; // Add routes handled by encryptionRouter
-  if (excludedRoutes.some((route) => req.path.startsWith(route))) {
-    return next(); // Skip encryptionMiddleware for excluded routes
-  }
-  encryptionMiddleware(req, res, next); // Apply encryptionMiddleware to other routes
-});
+// app.use((req: Request, res: Response, next: NextFunction) => {
+//   const excludedRoutes = ["/api/encrypt", "/api/decrypt"]; // Add routes handled by encryptionRouter
+//   if (excludedRoutes.some((route) => req.path.startsWith(route))) {
+//     return next(); // Skip encryptionMiddleware for excluded routes
+//   }
+//   encryptionMiddleware(req, res, next); // Apply encryptionMiddleware to other routes
+// });
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes

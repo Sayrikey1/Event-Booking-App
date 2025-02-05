@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Confirmation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .header {
+      background: linear-gradient(135deg, #4CAF50, #66BB6A);
+      padding: 20px;
+      text-align: center;
+      color: #fff;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+    .header p {
+      margin: 5px 0 0;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .content {
+      padding: 20px;
+      color: #333;
+    }
+    .content p {
+      line-height: 1.6;
+      margin: 0 0 15px;
+    }
+    .content strong {
+      color: #4CAF50;
+    }
+    .qr-codes {
+      padding: 20px;
+      background-color: #f7fafc;
+    }
+    .qr-codes p {
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    .qr-codes div {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .qr-codes img {
+      margin: 10px auto;
+      max-width: 150px;
+      max-height: 150px;
+      display: block;
+    }
+    .footer {
+      background-color: #eceff1;
+      padding: 15px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+    .footer p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Booking Confirmation</h1>
+      <p>Thank you for booking with us!</p>
+    </div>
+
+    <div class="content">
+      <p>Dear {{userName}},</p>
+      <p>
+        We are excited to confirm that your booking for the event
+        <strong>{{eventName}}</strong> on <strong>{{eventDate}}</strong> has been successfully processed.
+      </p>
+      <p>
+        You have successfully booked <strong>{{ticketCount}}</strong> ticket(s) for this event.
+      </p>
+      <p>Your ticket IDs are: <strong>{{ticketIds}}</strong></p>
+    </div>
+
+    <div class="qr-codes">
+      <p>Here are your QR codes for the tickets:</p>
+      {{#each qrCodes}}
+      <div>
+        <p>Ticket {{this.ticketId}}:</p>
+        <img src="cid:{{this.ticketId}}.png" alt="QR Code for Ticket {{this.ticketId}}" />
+      </div>
+      {{/each}}
+    </div>
+
+    <div class="footer">
+      <p>We look forward to seeing you at the event!</p>
+      <p>&copy; 2024 Event-Booking-App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

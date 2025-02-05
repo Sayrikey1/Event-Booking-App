@@ -1,14 +1,15 @@
 import dotenv from "dotenv";
 import { StatusCodes } from "http-status-codes";
-import { AppDataSource } from "src/data-source";
+import { AppDataSource } from "../data-source";
 import { ICreateEvent, IUpdateEvent } from "src/types";
 import { Event } from "../entity/Event";
-import { handleError, updateEntity } from "src/utils/serviceUtils";
+import { handleError, updateEntity } from "../utils/serviceUtils";
+import { User } from "../entity/User";
 
 dotenv.config();
 
 export interface IEvent {
-    CreateEvent: (load: ICreateEvent) => Promise<any>;
+    CreateEvent: (userId: string, load: ICreateEvent) => Promise<any>;
     GetEvent: (id: string) => Promise<any>;
     GetAllEvents: () => Promise<any>;
     UpdateEvent: (userId: string, load: IUpdateEvent) => Promise<any>;
@@ -17,6 +18,7 @@ export interface IEvent {
 }
 
 export class EventService implements IEvent {
+    private userRepository = AppDataSource.getRepository(User)
     private eventRepository = AppDataSource.getRepository(Event);
 
     private async findEventById(id: string) {
@@ -29,14 +31,27 @@ export class EventService implements IEvent {
         }
     }
 
-    async CreateEvent(load: ICreateEvent) {
+    async CreateEvent(userId: string, load: ICreateEvent) {
         try {
+            // Find the user by the userId
+            const user = await this.userRepository.findOne({ where: { id: userId } });
+            if (!user) {
+                return {
+                    status: StatusCodes.NOT_FOUND,
+                    message: "User not found",
+                };
+            }
+    
+            // Create the event with the user that created it
             const event = this.eventRepository.create({
                 ...load,
                 availableTickets: load.totalTickets,
+                user: user, // Set the user who created the event
             });
+    
+            // Save the event
             const createdEvent = await this.eventRepository.save(event);
-
+    
             return {
                 status: StatusCodes.CREATED,
                 message: "Event created successfully",
@@ -46,6 +61,7 @@ export class EventService implements IEvent {
             return handleError(err);
         }
     }
+    
 
     async GetEvent(id: string) {
         try {

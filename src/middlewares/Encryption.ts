@@ -54,7 +54,7 @@ function decryptObject(obj: any): any {
     return obj;
 }
 
-export const encryptionMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const encryptionMiddleware = (req: Request, res: Response, next: NextFunction): void => {
     if (process.env.ENCRYPTION === 'TRUE') {
         // Decrypt request body
         if (req.body) {
@@ -67,22 +67,25 @@ export const encryptionMiddleware = (req: Request, res: Response, next: NextFunc
             } catch (err) {
                 console.error('Decryption failed:', err.message);
                 res.status(400).send({ error: 'Invalid encrypted request body' });
+                return; // Ensure request is terminated
             }
         }
 
         // Encrypt response body
         const originalSend = res.send;
 
-        res.send = function (body: any) {
+        res.send = function (body: any): Response {
             try {
-                // Ensure body is stringified before encryption
                 let encryptedBody: any;
                 if (typeof body === 'object') {
                     console.log('Encrypting JSON response:', body);
                     encryptedBody = encryptObject(body); // Encrypt JSON objects
+                } else if (typeof body === 'string') {
+                    console.log('Encrypting string response:', body);
+                    encryptedBody = encrypt(body); // Encrypt plain text
                 } else {
-                    console.log('Encrypting non-object response:', body);
-                    encryptedBody = encryptObject(JSON.parse(body)); // Wrap non-objects for encryption
+                    console.log('Encrypting non-string primitive response:', body);
+                    encryptedBody = encrypt(JSON.stringify(body)); // Convert primitive values to strings
                 }
 
                 res.setHeader('X-Encrypted', 'true');
@@ -95,3 +98,5 @@ export const encryptionMiddleware = (req: Request, res: Response, next: NextFunc
     }
     next();
 };
+
+
