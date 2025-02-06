@@ -1,13 +1,16 @@
 import request from "supertest";
-import app from "../src/index";
 import http from "http";
 import { ConnectDatabase, disconnectDatabase } from "../jest.setup";
 
+let app: any;
 let server: http.Server;
 
 beforeAll(async () => {
+  await ConnectDatabase();
   server = http.createServer(app);
-  await ConnectDatabase(server, 3000);
+  server.listen(3000, "0.0.0.0", () => {
+    console.log("🚀 Server running at http://localhost:3000/");
+  });
 });
 
 afterAll(async () => {
@@ -43,7 +46,7 @@ describe("User Routes Integration Tests", () => {
     });
   });
 
-  describe("POST /api/register", () => {
+  describe("POST /api/create", () => {
     it("should create a new user and return 201", async () => {
       const newUser = {
         first_name: "Neymar",
@@ -64,3 +67,4 @@ describe("User Routes Integration Tests", () => {
     });
   });
 });
+
