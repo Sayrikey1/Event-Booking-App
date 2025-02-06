@@ -111,7 +111,7 @@ const uri: string = process.env.DB_URI ? process.env.DB_URI : "";
 
 
 ConnectDatabse(server, httpsserver, PORT, HTTPS_PORT, uri);
-NotificationJob(io);
+// NotificationJob(io);
 
 
 export default app
