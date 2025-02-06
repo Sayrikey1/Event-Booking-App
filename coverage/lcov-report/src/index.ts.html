@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.01% </span>
+                <span class="strong">90.19% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>44/53</span>
+                <span class='fraction'>46/51</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">66.66% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>2/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84.61% </span>
+                <span class="strong">90% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>44/52</span>
+                <span class='fraction'>45/50</span>
             </div>
         
             
@@ -174,13 +174,7 @@
 <a name='L109'></a><a href='#L109'>109</a>
 <a name='L110'></a><a href='#L110'>110</a>
 <a name='L111'></a><a href='#L111'>111</a>
-<a name='L112'></a><a href='#L112'>112</a>
-<a name='L113'></a><a href='#L113'>113</a>
-<a name='L114'></a><a href='#L114'>114</a>
-<a name='L115'></a><a href='#L115'>115</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L112'></a><a href='#L112'>112</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -258,12 +252,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -291,10 +285,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">import { performance } from "perf_hooks";  // Import performance API
-&nbsp;
-export const startTime = performance.now(); // Start time logging
-&nbsp;
+<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">// src/index.ts
 import "reflect-metadata";
 &nbsp;
 // Core modules
@@ -371,12 +362,12 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerconfig));
 app.use("/", encryptionRouter);
 &nbsp;
 // Apply encryptionMiddleware for all other routes, excluding the encryptionRouter
-app.use(<span class="fstat-no" title="function not covered" >(r</span>eq: Request, res: Response, next: NextFunction) =&gt; {
-  const excludedRoutes = <span class="cstat-no" title="statement not covered" >["/api/encrypt", "/api/decrypt"];</span> // Add routes handled by encryptionRouter
-<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (excludedRoutes.some(<span class="fstat-no" title="function not covered" >(r</span>oute) =&gt; <span class="cstat-no" title="statement not covered" >req.path.startsWith(route))</span>) {</span>
+app.use((req: Request, res: Response, next: NextFunction) =&gt; {
+  const excludedRoutes = ["/api/encrypt", "/api/decrypt"]; // Add routes handled by encryptionRouter
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (excludedRoutes.some((route) =&gt; req.path.startsWith(route))) {
 <span class="cstat-no" title="statement not covered" >    return next(); </span>// Skip encryptionMiddleware for excluded routes
   }
-<span class="cstat-no" title="statement not covered" >  encryptionMiddleware(req, res, next); </span>// Apply encryptionMiddleware to other routes
+  encryptionMiddleware(req, res, next); // Apply encryptionMiddleware to other routes
 });
 &nbsp;
 const limiter = rateLimit({
@@ -412,7 +403,7 @@ export default app</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-02-06T03:59:09.637Z
+                at 2025-02-06T09:53:03.237Z
             </div>
         <script src="../prettify.js"></script>
         <script>

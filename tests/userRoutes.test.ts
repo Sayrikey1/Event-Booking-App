@@ -1,79 +1,66 @@
-// tests/userRoutes.ts
-
 import request from "supertest";
-import { appInstance as app } from "../jest.setup";  
+import app from "../src/index";
+import http from "http";
+import { ConnectDatabase, disconnectDatabase } from "../jest.setup";
+
+let server: http.Server;
+
+beforeAll(async () => {
+  server = http.createServer(app);
+  await ConnectDatabase(server, 3000);
+});
+
+afterAll(async () => {
+  await disconnectDatabase();
+  if (server) {
+    await new Promise<void>((resolve) => {
+      server.close(() => {
+        console.log("🛑 Server closed after tests.");
+        resolve();
+      });
+    });
+  }
+});
 
 describe("User Routes Integration Tests", () => {
-  let server: any;
-
-  beforeAll(async () => {
-    jest.setTimeout(30000); // Set timeout to 30 seconds
-    server = app.listen(3000, () => {
-      console.log("Test server started on ephemeral port");
-    });
-  });
-
-  afterAll(async () => {
-    server.close(() => {
-      console.log("Test server closed and database disconnected");
-    });
-  });
-
-  describe('POST /api/login', () => {
-    it('should return 200 with valid credentials', async () => {
-      // Arrange: Use valid credentials that are known to exist in your test data.
-      const loginData = { email: 'test@example.com', password: 'password' };
-
-      // Act: Call the endpoint.
+  describe("POST /api/login", () => {
+    it("should return 200 with valid credentials", async () => {
       const response = await request(app)
-        .post('/api/login')
-        .send(loginData);
-
-      // Assert: Check that the response is 200 and that the returned JSON contains the expected values.
+        .post("/api/login")
+        .send({ email: "essenapp1@gmail.com", password: "SecurePass123!" });
+      
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('status', 200);
-      expect(response.body).toHaveProperty('message');
-      // Optionally, check for a token or user id if your implementation returns those.
+      expect(response.body).toHaveProperty("token");
     });
 
-    it('should handle invalid credentials', async () => {
-      // Arrange: Use credentials that are not valid.
-      const loginData = { email: 'nonexistent@example.com', password: 'wrongPassword' };
-
-      // Act:
+    it("should return 401 for invalid credentials", async () => {
       const response = await request(app)
-        .post('/api/login')
-        .send(loginData);
-
-      // Assert: Expect a 404 (or your implementation’s error code for user not found)
-      expect(response.status).toBe(404);
-      expect(response.body).toHaveProperty('message', 'User not found');
+        .post("/api/login")
+        .send({ email: "wrongemail@gmail.com", password: "WrongPass123!" });
+      
+      expect(response.status).toBe(401);
+      expect(response.body).toHaveProperty("message", "Invalid credentials");
     });
   });
 
-  describe('POST /api/create', () => {
-    it('should create a user successfully', async () => {
-      // Arrange: Provide a new user’s data.
-      const userData = {
-        first_name: 'John',
-        last_name: 'Doe',
-        username: 'johndoe',
-        email: 'john@example.com',
-        password: 'password',
-        user_type: 'Basic'
+  describe("POST /api/register", () => {
+    it("should create a new user and return 201", async () => {
+      const newUser = {
+        first_name: "Neymar",
+        last_name: "Da Silva",
+        username: "NEY-Jr",
+        email: "neymar@gmail.com",
+        password: "SecurePass123!",
+        user_type: "Basic"
       };
 
-      // Act:
       const response = await request(app)
-        .post('/api/create')
-        .send(userData);
+        .post("/api/create")
+        .send(newUser);
 
-      // Assert: Check for a 201 Created status and the expected response body.
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('message', 'User created successfully');
-      // You may also check for additional properties in the response, if any.
+      expect(response.body).toHaveProperty("id");
+      expect(response.body).toHaveProperty("email", newUser.email);
     });
   });
-
-  // Optionally add tests for other endpoints (e.g., GET /api/user, DELETE /api/delete/:id, etc.)
 });

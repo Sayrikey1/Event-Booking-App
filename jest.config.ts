@@ -5,6 +5,14 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  transform: {
+    "^.+\\.(ts|tsx)$": "ts-jest",
+  },
+  globals: {
+    "ts-jest": {
+      isolatedModules: true,
+    },
+  },
   coverageDirectory: './coverage',
   collectCoverage: true,
   coverageThreshold: {
@@ -15,7 +23,7 @@ const config: Config = {
       statements: 80,
     },
   },
-  setupFilesAfterEnv: ['./jest.setup.ts']
+  setupFilesAfterEnv: ['./jest.setup.ts'],
 };
 
 export default config;

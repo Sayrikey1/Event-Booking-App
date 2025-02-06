@@ -1,31 +1,27 @@
+import 'ts-node/register';
 import dotenv from "dotenv";
 dotenv.config(); // Load environment variables before anything else
 
-import "reflect-metadata";
+import "reflect-metadata"; // Must be at the very top!
 import { DataSource } from "typeorm";
 import * as fs from "fs";
-import path from "path";
 import http from "http";
+import path from "path";
+import glob from "glob";
+
 
 import app from "./src/index";
+import { User } from "./src/entity/User";
+import { Event } from "./src/entity/Event";
+import { Message } from "./src/entity/Message";
+import { Otp } from "./src/entity/Otp";
+import { Payment } from "./src/entity/Payment";
+import { Ticket } from "./src/entity/Ticket";
+import { WaitingList } from "./src/entity/WaitingList";
 
-// Validate required environment variables
-const requiredEnvVars = ["POSGRES_HOST", "POSGRES_PORT", "POSGRES_USERNAME", "POSGRES_PASSWORD", "POSGRES_DATABASE"];
-requiredEnvVars.forEach((key) => {
-  if (!process.env[key]) {
-    console.error(`Missing environment variable: ${key}`);
-    process.exit(1);
-  }
-});
-
-// Configure SSL only if running in production
-const isProduction = process.env.NODE_ENV === "test";
-const sslConfig = isProduction
-  ? {
-      rejectUnauthorized: false,
-      ca: fs.existsSync("./ca.pem") ? fs.readFileSync("./ca.pem").toString() : "",
-    }
-  : false;
+const entityPattern = path.resolve(__dirname, "src", "entity", "*.ts");
+const entityFiles = glob.sync(entityPattern);
+console.log("Entity files loaded:", entityFiles);
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -36,53 +32,51 @@ export const AppDataSource = new DataSource({
   database: process.env.POSGRES_DATABASE,
   synchronize: true,
   logging: false,
-  ssl: sslConfig,
-  entities: [`${__dirname}/entity/*.ts`],
-  migrations: [`${__dirname}/migration/*.ts`],
-  subscribers: [`${__dirname}/subscriber/*.ts`],
+  ssl: {
+    rejectUnauthorized: false,
+    ca: fs.existsSync("./ca.pem") ? fs.readFileSync("./ca.pem").toString() : "",
+  },
+  entities: [User, Event, Message, Otp, Payment, Ticket, WaitingList],
+  migrations: [path.resolve(__dirname, "src", "migration", "*.ts")],
+  subscribers: [path.resolve(__dirname, "src", "subscriber", "*.ts")],
 });
 
-// Export server and appInstance for external access
-export let server0: any;
-export let appInstance: any = app;
+jest.setTimeout(60000);
 
-const ConnectDatabase = async (server: any, PORT: number) => {
+const requiredEnvVars = [
+  "POSGRES_HOST", "POSGRES_PORT", "POSGRES_USERNAME", "POSGRES_PASSWORD", "POSGRES_DATABASE"
+];
+requiredEnvVars.forEach((key) => {
+  if (!process.env[key]) {
+    console.error(`Missing environment variable: ${key}`);
+    process.exit(1);
+  }
+});
+
+
+export const ConnectDatabase = async (server: any, PORT: number) => {
   try {
     await AppDataSource.initialize();
-    console.log("✅ Data Source has been initialized!");
-
+    console.log("✅ Data Source initialized!");
     server.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Server is running on http://localhost:${PORT}/api/docs`);
+      console.log(`🚀 Server running at http://localhost:${PORT}/api/docs`);
     });
   } catch (error) {
-    console.error("❌ Error during Data Source initialization:", error);
-    process.exit(1); // Exit if DB connection fails
+    console.error("❌ Data Source initialization error:", error);
+    process.exit(1);
   }
 };
 
-const disconnectDatabase = async (): Promise<void> => {
+export const disconnectDatabase = async (): Promise<void> => {
   if (AppDataSource.isInitialized) {
     try {
       await AppDataSource.destroy();
-      console.log("🔌 Data Source has been disconnected!");
+      console.log("🔌 Data Source disconnected!");
     } catch (error) {
-      console.error("❌ Error during Data Source disconnect:", error);
+      console.error("❌ Error disconnecting Data Source:", error);
     }
   }
 };
 
-// Jest setup
-beforeAll(async () => {
-  jest.setTimeout(40000) //40 seconds
-  server0 = http.createServer(app);
-  await ConnectDatabase(server0, 3000);
-});
 
-afterAll(async () => {
-  await disconnectDatabase();
-  if (server0) {
-    server0.close(() => {
-      console.log("🛑 Server closed after tests.");
-    });
-  }
-});
+

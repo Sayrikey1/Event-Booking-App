@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
-import { startTime } from "../index";
 
 const ConnectDatabse = (
   app: any,
@@ -29,10 +28,6 @@ const ConnectDatabse = (
         }
       )
     )
-    .then(() => {
-      const endTime = performance.now(); // Capture end time
-      console.log(`🚀 App started in ${(endTime - startTime).toFixed(2)} ms`);
-    })
     .catch((error) =>
       console.log("Error during Data Source initialization", error)
     );

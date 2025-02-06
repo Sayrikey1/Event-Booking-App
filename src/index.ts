@@ -1,7 +1,4 @@
-import { performance } from "perf_hooks";  // Import performance API
-
-export const startTime = performance.now(); // Start time logging
-
+// src/index.ts
 import "reflect-metadata";
 
 // Core modules
