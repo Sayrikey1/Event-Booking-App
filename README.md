@@ -11,7 +11,9 @@ The Event Ticket Booking App is a comprehensive solution for managing and bookin
 - 📅 Event creation and management
 - 🎫 Ticket booking and payment processing
 - 🔔 Real-time notifications and updates
-- 🔒 Secure data handling and encryption
+- 🔒 Secure data handling and encryption (Note: Encryption is turned off to make API calls easier)
+- 📱 QR code generation for ordered tickets
+- 🔄 Users on the waiting list get assigned tickets when someone cancels
 
 ## Architecture 🏗️
 
@@ -98,7 +100,7 @@ The architecture of the Event Ticket Booking App is designed to be modular and s
 │   ├── redis-client.ts
 │   └── types.ts
 └── tests
-    └── userRoutes.test.ts
+   └── userRoutes.test.ts
 ```
 
 ## Installation 🛠️
@@ -135,7 +137,6 @@ The architecture of the Event Ticket Booking App is designed to be modular and s
 
 5. Run the project:
    ```bash
-   npm start
    ```
 
 6. Run the project in development mode:
@@ -152,7 +153,7 @@ npm test
 
 ## Deployment 🚀
 
-The application is deployed at [Deployment Link](https://event-booking-app-eq34.onrender.com).
+The application is deployed at [Deployment Link](https://event-booking-app-wpjp.onrender.com/api/docs/).
 
 ## Contributing 🤝
 
