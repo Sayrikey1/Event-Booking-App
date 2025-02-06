@@ -1,4 +1,3 @@
-```markdown
 # Event Ticket Booking App 🎟️🎉
 
 ## Overview
@@ -100,7 +99,7 @@ The architecture of the Event Ticket Booking App is designed to be modular and s
 │   ├── redis-client.ts
 │   └── types.ts
 └── tests
-   └── userRoutes.test.ts
+    └── userRoutes.test.ts
 ```
 
 ## Installation 🛠️
@@ -137,6 +136,7 @@ The architecture of the Event Ticket Booking App is designed to be modular and s
 
 5. Run the project:
    ```bash
+   npm start
    ```
 
 6. Run the project in development mode:
@@ -166,4 +166,3 @@ This project is licensed under the MIT License.
 ## Author 👨‍💻
 
 Developed by [Sayrikey1](https://github.com/Sayrikey1).
-```
