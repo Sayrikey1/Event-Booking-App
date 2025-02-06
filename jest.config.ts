@@ -1,3 +1,5 @@
+// jest.config.js
+
 import type { Config } from 'jest';
 
 const config: Config = {
@@ -13,6 +15,7 @@ const config: Config = {
       statements: 80,
     },
   },
+  setupFilesAfterEnv: ['./jest.setup.ts']
 };
 
 export default config;

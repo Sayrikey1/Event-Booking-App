@@ -1,26 +1,23 @@
 import { Server } from "socket.io";
 
-const Notification = async (io: Server) => {
-  console.log(`
-     ------------   Notification service has been initialized  ---------------
-        `);
+let intervalId: NodeJS.Timeout;
 
-  setInterval(() => {
-    io.emit("open_notification", "Heyyyyyyoooo Fucking world!");
+export const NotificationJob = (io: Server) => {
+  console.log("Notifications job is initialized");
+
+  intervalId = setInterval(() => {
+    io.emit("open_notification", "Heyyyyyyoooo world!");
   }, 60000);
 
+  io.on("connection", (socket) => {
+    console.log("Socket.io server initialized");
 
-  setInterval(() => {
-    io.to("1").emit("close_notification","Hello room 1")
-  }, 10000);
-  
-  
-  
+    socket.on("disconnect", () => {
+      console.log("Socket.io closed");
+    });
+  });
 };
 
-export default Notification;
-
-
-
-
-
+export const clearNotificationJob = () => {
+  clearInterval(intervalId);
+};
