@@ -25,7 +25,6 @@ export const AppDataSource = new DataSource({
   subscribers: [__dirname + "/src/subscriber/**/*.ts"],
 });
 
-jest.setTimeout(60000);
 
 export const ConnectDatabase = async () => {
   if (!AppDataSource.isInitialized) {

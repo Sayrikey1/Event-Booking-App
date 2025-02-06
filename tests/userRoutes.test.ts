@@ -1,9 +1,11 @@
 import request from "supertest";
 import http from "http";
 import { ConnectDatabase, disconnectDatabase } from "../jest.setup";
+import app from "../src/index";
 
-let app: any;
 let server: http.Server;
+
+jest.setTimeout(60000);
 
 beforeAll(async () => {
   await ConnectDatabase();

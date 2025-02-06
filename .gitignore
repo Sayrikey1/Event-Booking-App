@@ -6,3 +6,5 @@ dist
 node_modules
 trash.txt
 logs
+files.py
+coverage

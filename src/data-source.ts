@@ -5,11 +5,11 @@ import path from 'path';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.POSGRES_HOST as string,
-  port: parseInt(process.env.POSGRES_PORT as string),
-  username: process.env.POSGRES_USERNAME as string,
-  password: process.env.POSGRES_PASSWORD as string,
-  database: process.env.POSGRES_DATABASE as string,
+  host: process.env.POSTGRES_HOST as string,
+  port: parseInt(process.env.POSTGRES_PORT as string),
+  username: process.env.POSTGRES_USERNAME as string,
+  password: process.env.POSTGRES_PASSWORD as string,
+  database: process.env.POSTGRES_DATABASE as string,
   synchronize: true,
   logging: false,
   ssl: {
