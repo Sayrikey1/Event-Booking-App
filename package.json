@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npm install && npm install --save-dev",
+    "build": "npm install && tsc",
     "test": "jest",
     "dev": "nodemon -w './**/*.ts' --exec 'ts-node' src/index.ts",
     "start": "node ./dist/index.js"
