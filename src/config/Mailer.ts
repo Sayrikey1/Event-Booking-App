@@ -2,12 +2,11 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import Handlebars from "handlebars";
 
 dotenv.config();
 
-// Fix for __dirname in ES Modules
+// For ES Modules, you might need to define __dirname. Uncomment if required.
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
 
@@ -47,7 +46,8 @@ export const mailer = async ({
 
   // Load and compile template if provided
   if (template) {
-    // const templatePath = path.join(__dirname, "src", "templates", `${template}.html`);
+    // Adjust the path based on your project structure.
+    // If using ES Modules and __dirname is not defined, ensure you have a suitable alternative.
     const templatePath = path.join(__dirname, "..", "templates", `${template}.html`);
     console.log(`Decoded path for mailer templates:`, templatePath);
 
@@ -61,7 +61,7 @@ export const mailer = async ({
     }
   }
 
-  const mailOptions: nodemailer.SendMailOptions = {
+  const mailOptions = {
     from: `Event-Booking-App <${process.env.USERMAIL}>`,
     to: mail,
     subject: subject,
@@ -69,6 +69,7 @@ export const mailer = async ({
     html: htmlTemplate || undefined, // Use HTML only if a valid template exists
     attachments: attachments,
   };
+  
 
   try {
     await transporter.sendMail(mailOptions);
