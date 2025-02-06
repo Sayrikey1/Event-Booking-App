@@ -1,14 +1,14 @@
 // tests/userRoutes.ts
 
 import request from "supertest";
-import app from "../src/app"; // Adjust the import based on your app's entry point
+import { appInstance as app } from "../jest.setup";  
 
 describe("User Routes Integration Tests", () => {
   let server: any;
 
   beforeAll(async () => {
     jest.setTimeout(30000); // Set timeout to 30 seconds
-    server = app.listen(1759, () => {
+    server = app.listen(3000, () => {
       console.log("Test server started on ephemeral port");
     });
   });

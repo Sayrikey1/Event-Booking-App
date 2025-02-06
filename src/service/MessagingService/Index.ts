@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import Notification from "./notifications";
+import { Notification } from "./notifications";
 
 
 const NotificationJob = async(io: Server) => {

@@ -106,7 +106,10 @@ const HTTPS_PORT: number = process.env.HTTPS_PORT
   : 5100;
 
 const uri: string = process.env.DB_URI ? process.env.DB_URI : "";
-ConnectDatabse(server, httpsserver, PORT, HTTPS_PORT, uri);
-NotificationJob(io);
+
+if (process.env.NODE_ENV !== 'test'){
+  ConnectDatabse(server, httpsserver, PORT, HTTPS_PORT, uri);
+  NotificationJob(io);
+}
 
 export default app

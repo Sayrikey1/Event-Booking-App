@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 
 let intervalId: NodeJS.Timeout;
 
-export const NotificationJob = (io: Server) => {
+export const Notification = (io: Server) => {
   console.log("Notifications job is initialized");
 
   intervalId = setInterval(() => {
