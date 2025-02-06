@@ -1,3 +1,4 @@
+```markdown
 # Event Ticket Booking App 🎟️🎉
 
 ## Overview
@@ -137,6 +138,11 @@ The architecture of the Event Ticket Booking App is designed to be modular and s
    npm start
    ```
 
+6. Run the project in development mode:
+   ```bash
+   npm run dev
+   ```
+
 ## Running Tests 🧪
 
 To run the tests, use the following command:
@@ -146,7 +152,7 @@ npm test
 
 ## Deployment 🚀
 
-The application is deployed at [Deployment Link](http://your-deployment-link.com).
+The application is deployed at [Deployment Link](https://event-booking-app-eq34.onrender.com).
 
 ## Contributing 🤝
 
@@ -159,3 +165,4 @@ This project is licensed under the MIT License.
 ## Author 👨‍💻
 
 Developed by [Sayrikey1](https://github.com/Sayrikey1).
+```
