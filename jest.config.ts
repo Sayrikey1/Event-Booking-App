@@ -10,5 +10,5 @@ module.exports = {
       tsconfig: "./tsconfig.json",
     },
   },
-  setupFilesAfterEnv: ["./jest.setup.ts"],
+  // setupFilesAfterEnv: ["./jest.setup.ts"],
 };
