@@ -22,8 +22,9 @@ export class EventService implements IEvent {
     private eventRepository = AppDataSource.getRepository(Event);
 
     private async findEventById(id: string) {
-        return this.eventRepository.findOne({ where: { id }, relations: ["organizer"] });
-    }
+        return this.eventRepository.findOne({ where: { id }, relations: ["user"] });
+      }
+      
 
     private async checkEventOwnership(event: Event, userId: string) {
         if (event.user.id !== userId) {

@@ -9,31 +9,16 @@ process.env.NODE_ENV = "test";
 import dotenv from "dotenv";
 dotenv.config();
 
-import { v4 as uuidv4 } from "uuid";
 import request from "supertest";
 import http from "http";
-import { AppDataSource } from "../src/data-source"; // This will load test DB settings when NODE_ENV==='test'
-import app from "../src/index"; // This file should export only your Express app (without auto-starting a server)
+import { AppDataSource } from "../src/data-source"; 
+import app from "../src/index"; 
 
-// For OTP retrieval, import Otp and OtpType
 import { Otp, OtpType } from "../src/entity/Otp";
-// For retrieving reset token, import User
 import { User } from "../src/entity/User";
+import { generateRandomUser } from "./helpers";
 
-// Helper function to generate random user details.
-function generateRandomUser() {
-  const randomSuffix = uuidv4().split("-")[0];
-  return {
-    first_name: "Test",
-    last_name: "User",
-    username: `testuser_${randomSuffix}`,
-    email: `testuser_${randomSuffix}@example.com`,
-    password: "TestPassword123!",
-    user_type: "Basic",
-  };
-}
 
-// Global variables to hold generated details and credentials.
 let randomUser = generateRandomUser();
 let createdUserId: string = "";
 let authToken: string = "";

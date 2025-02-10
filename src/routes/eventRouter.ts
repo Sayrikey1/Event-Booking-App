@@ -145,7 +145,7 @@ eventRouter.get("/api/event", TokenVerification, eventController.GetAllEvents);
  *       400:
  *         description: Bad Request
  */
-eventRouter.patch("/api/event/update", TokenVerification, IsOwner, eventController.UpdateEvent);
+eventRouter.patch("/api/event/update", TokenVerification, eventController.UpdateEvent);
 
 /**
  * @openapi
@@ -166,6 +166,6 @@ eventRouter.patch("/api/event/update", TokenVerification, IsOwner, eventControll
  *       404:
  *         description: Event not found
  */
-eventRouter.delete("/api/event/delete/:id", TokenVerification, IsOwner, eventController.DeleteEvent);
+eventRouter.delete("/api/event/delete/:id", TokenVerification, eventController.DeleteEvent);
 
 export default eventRouter;
