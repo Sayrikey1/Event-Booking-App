@@ -34,7 +34,7 @@ export const AppDataSource = new DataSource({
     ? false
     : {
         rejectUnauthorized: false,
-        ca: fs.readFileSync(path.join(__dirname, 'ca.pem')).toString(),
+        ca: fs.readFileSync(path.join(__dirname, "..", "ca.pem")).toString(),
       },
   
   // Use a glob pattern that loads both .ts and .js files

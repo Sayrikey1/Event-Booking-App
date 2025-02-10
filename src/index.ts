@@ -100,7 +100,7 @@ app.use("/", paymentRouter);
 const PORT: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const HTTPS_PORT: number = process.env.HTTPS_PORT
   ? parseInt(process.env.HTTPS_PORT, 10)
-  : 5100;
+  : 3500;
 
 const uri: string = process.env.DB_URI ? process.env.DB_URI : "";
 
