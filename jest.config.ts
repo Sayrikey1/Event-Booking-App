@@ -3,13 +3,15 @@ module.exports = {
   testEnvironment: "node",
   moduleFileExtensions: ["js", "ts"],
   transform: {
-    "^.+\\.(ts|tsx)$": ["ts-jest", { tsconfig: "./tsconfig.json" }],
+    "^.+\\.(ts|tsx)$": [
+      "ts-jest",
+      { tsconfig: "./tsconfig.json" } // ts-jest config here instead of globals
+    ],
   },
-  globals: {
-    "ts-jest": {
-      tsconfig: "./tsconfig.json",
-    },
-  },
-  // setupFilesAfterEnv: ["./jest.setup.ts"],
-  maxWorkers: 1
+  // Remove globals.ts-jest if not needed.
+  collectCoverage: true,
+  collectCoverageFrom: ["src/**/*.ts"],
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "lcov"],
+  maxWorkers: 1,
 };
